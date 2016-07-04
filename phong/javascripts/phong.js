@@ -1,9 +1,18 @@
 var scene; 
 var camera; 
 var renderer;
+
+var phongMaterial;
+
 var cubeMesh;
 var pointLightMesh;
 var pointLight;
+
+var modelToWorldMatrix;
+var worldToViewMatrix;
+var viewToProjectionMatrix;
+
+var cubeGeometry;
 
 function addPointLight () {
 
@@ -23,9 +32,10 @@ function initCamera () {
 
   camera = new THREE.PerspectiveCamera ( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
   
-  camera.position.set ( 1,1,1 );
+  camera.position.set ( 2,2,2 );
   camera.up = new THREE.Vector3 ( -1, 1,-1 );
   camera.lookAt ( new THREE.Vector3 ( 0, 0,0 ));
+  camera.updateMatrixWorld ( true );
 }
 
 function initThreeJS () {
@@ -46,10 +56,35 @@ function initScene () {
 
   initThreeJS ();
   initCamera ();
+  initShader ();
   renderAxis ();
   renderCube ();
   addPointLight ();
   renderPointLight ();
+}
+
+function initShader () {
+
+  modelToWorldMatrix = new THREE.Matrix4 ();
+  worldToViewMatrix = camera.matrixWorldInverse;
+  viewToProjectionMatrix = camera.projectionMatrix;
+//debugger;
+  //cube.computeVertexNormals ();
+  cubeGeometry = new THREE.BoxBufferGeometry  ( 1, 1, 1 );
+
+  // Uniforms
+  var uniforms = {  
+    myColor: { type: "c", value: new THREE.Color( 0xff0000 ) },
+    modelToWorldMtx: { type: 'm4', value: modelToWorldMatrix },
+    worldToViewMtx: { type: 'm4', value: worldToViewMatrix },
+    viewToProjectionMtx: { type: 'm4', value: viewToProjectionMatrix },
+  };
+
+  phongMaterial = new THREE.ShaderMaterial ({  
+    uniforms: uniforms,
+    vertexShader: document.getElementById ( 'vertexShader' ).textContent,
+    fragmentShader: document.getElementById ( 'fragmentShader' ).textContent
+  });
 }
 
 function renderAxis () {
@@ -76,9 +111,10 @@ function renderAxis () {
 
 function renderCube () {
 
-  var geometry = new THREE.BoxGeometry ( 1, 1, 1 );
   var material = new THREE.MeshLambertMaterial ({ color: 0xCC0000 });
-  cubeMesh = new THREE.Mesh ( geometry, material );
+  //cubeMesh = new THREE.Mesh ( cubeGeometry, material );
+  cubeMesh = new THREE.Mesh ( cubeGeometry, phongMaterial );
+  //cubeMesh = new THREE.Mesh ( cubeGeometry, material );
   scene.add ( cubeMesh );
 }
 
