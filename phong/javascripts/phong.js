@@ -1,119 +1,104 @@
-var gl; // A global variable for the WebGL context
+var scene; 
+var camera; 
+var renderer;
+var cubeMesh;
+var pointLightMesh;
+var pointLight;
 
-function start() {
-  var canvas = document.getElementById("canvas");
+function addPointLight () {
 
-  // Initialize the GL context
-  gl = initWebGL(canvas);
+  // create a point light
+  pointLight = new THREE.PointLight ( 0xFFFFFF );
 
-  // Only continue if WebGL is available and working
+  // set its position
+  pointLight.position.x = 1;
+  pointLight.position.y = 0;
+  pointLight.position.z = 0;
 
-  if (gl) {
-    // Set clear color to black, fully opaque
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    // Enable depth testing
-    gl.enable(gl.DEPTH_TEST);
-    // Near things obscure far things
-    gl.depthFunc(gl.LEQUAL);
-    // Clear the color as well as the depth buffer.
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  }
+  // add to the scene
+  scene.add ( pointLight );
 }
 
-function initWebGL(canvas) {
-  gl = null;
+function initCamera () {
 
-  try {
-    // Try to grab the standard context. If it fails, fallback to experimental.
-    gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-  } catch (e) {}
-
-  // If we don't have a GL context, give up now
-  if (!gl) {
-    alert("Unable to initialize WebGL. Your browser may not support it.");
-    gl = null;
-  }
-
-  return gl;
+  camera = new THREE.PerspectiveCamera ( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+  
+  camera.position.set ( 1,1,1 );
+  camera.up = new THREE.Vector3 ( -1, 1,-1 );
+  camera.lookAt ( new THREE.Vector3 ( 0, 0,0 ));
 }
 
-function initShaders() {
-  var fragmentShader = getShader(gl, "shader-fs");
-  var vertexShader = getShader(gl, "shader-vs");
-  
-  // Create the shader program
-  
-  shaderProgram = gl.createProgram();
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
-  gl.linkProgram(shaderProgram);
-  
-  // If creating the shader program failed, alert
-  
-  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert("Unable to initialize the shader program: " + gl.getProgramInfoLog(shader));
-  }
-  
-  gl.useProgram(shaderProgram);
-  
-  vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-  gl.enableVertexAttribArray(vertexPositionAttribute);
+function initThreeJS () {
+
+  scene = new THREE.Scene();
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild( renderer.domElement );
 }
 
-function getShader(gl, id) {
-  var shaderScript, theSource, currentChild, shader;
-  
-  shaderScript = document.getElementById(id);
-  
-  if (!shaderScript) {
-    return null;
-  }
-  
-  theSource = "";
-  currentChild = shaderScript.firstChild;
-  
-  while(currentChild) {
-    if (currentChild.nodeType == currentChild.TEXT_NODE) {
-      theSource += currentChild.textContent;
-    }
-    
-    currentChild = currentChild.nextSibling;
-  }
-  
-  if (shaderScript.type == "x-shader/x-fragment") {
-    shader = gl.createShader(gl.FRAGMENT_SHADER);
-  } else if (shaderScript.type == "x-shader/x-vertex") {
-    shader = gl.createShader(gl.VERTEX_SHADER);
-  } else {
-     // Unknown shader type
-     return null;
-  }
-  gl.shaderSource(shader, theSource);
-    
-  // Compile the shader program
-  gl.compileShader(shader);  
-    
-  // See if it compiled successfully
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {  
-      alert("An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader));  
-      return null;  
-  }
-    
-  return shader;
-}
-var horizAspect = 480.0/640.0;
+function initScene () {
 
-function initBuffers() {
-  squareVerticesBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
-  
-  var vertices = [
-    1.0,  1.0,  0.0,
-    -1.0, 1.0,  0.0,
-    1.0,  -1.0, 0.0,
-    -1.0, -1.0, 0.0
-  ];
-  
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+  initThreeJS ();
+  initCamera ();
+  renderAxis ();
+  renderCube ();
+  addPointLight ();
+  renderPointLight ();
+}
+
+function renderAxis () {
+
+  var xAxisMaterial = new THREE.LineBasicMaterial ({ color: 0xff0000 });
+  var yAxisMaterial = new THREE.LineBasicMaterial ({ color: 0x00ff00 });
+  var zAxisMaterial = new THREE.LineBasicMaterial ({ color: 0x0000ff });
+
+  var xAxisGeometry = new THREE.Geometry ();
+  xAxisGeometry.vertices.push(new THREE.Vector3 ( 0, 0, 0 ), new THREE.Vector3 ( 1, 0, 0 ));
+  var yAxisGeometry = new THREE.Geometry ();
+  yAxisGeometry.vertices.push ( new THREE.Vector3 ( 0, 0, 0 ), new THREE.Vector3 ( 0, 1, 0 ));
+  var zAxisGeometry = new THREE.Geometry ();
+  zAxisGeometry.vertices.push ( new THREE.Vector3 ( 0, 0, 0 ), new THREE.Vector3 ( 0, 0, 1 ));
+
+  var xAxis = new THREE.Line ( xAxisGeometry, xAxisMaterial );
+  var yAxis = new THREE.Line ( yAxisGeometry, yAxisMaterial );
+  var zAxis = new THREE.Line ( zAxisGeometry, zAxisMaterial );
+
+  scene.add ( xAxis );
+  scene.add ( yAxis );
+  scene.add ( zAxis );  
+}
+
+function renderCube () {
+
+  var geometry = new THREE.BoxGeometry ( 1, 1, 1 );
+  var material = new THREE.MeshLambertMaterial ({ color: 0xCC0000 });
+  cubeMesh = new THREE.Mesh ( geometry, material );
+  scene.add ( cubeMesh );
+}
+
+function renderPointLight () {
+
+  var geometry = new THREE.SphereGeometry ( 0.25, 64, 64 );
+  var material = new THREE.MeshBasicMaterial ({ color: 0xffffff });
+  pointLightMesh = new THREE.Mesh ( geometry, material );
+
+  scene.add ( pointLightMesh );
+  pointLightMesh.position.set ( pointLight.position.x, pointLight.position.y, pointLight.position.z );
+}
+
+var render = function () {
+
+  requestAnimationFrame ( render );
+
+  cubeMesh.rotation.x += 0.01;
+  cubeMesh.rotation.y += 0.01;
+
+  renderer.render ( scene, camera );
+};
+
+function start () {
+
+  initScene ();
+  render ();
 }
 start ();
