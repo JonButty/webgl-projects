@@ -11,24 +11,40 @@
   <!-- non-fullscreen
     <canvas id="glCanvas" style="border: none;" width="100%" height="100%"></canvas>
     -->
-    <script src="javascripts/three.js"></script>
+    <script src="../javascripts/threejs/build/three.js"></script>
+    <script src="../javascripts/threejs/examples/js/controls/OrbitControls.js"></script>
     <script type="x-shader/x-fragment" id="fragmentShader">
       
-      uniform vec3 myColor;
+      uniform vec3 diffuseColor;
+
+      varying vec4 toLightDir;
+      varying vec4 normalVarying;
 
       void main(void) {
-        gl_FragColor = vec4 ( myColor, 1.0 );
+
+        float lambertCoefficient = dot ( normalVarying, toLightDir );
+
+        vec4 diffuse = vec4 ( diffuseColor, 1.0 ) * lambertCoefficient;
+
+        gl_FragColor = diffuse;
       }
 
     </script>
     <script type="x-shader/x-vertex" id="vertexShader">
       
-      uniform mat4 modelToWorldMtx;
-      uniform mat4 worldToViewMtx;
-      uniform mat4 viewToProjectionMtx;
+      uniform vec3 lightPosition;
+      uniform vec3 diffuseColor;
+
+      varying vec4 toLightDir;
+      varying vec4 normalVarying;
 
       void main(void) {
-        gl_Position = viewToProjectionMtx * worldToViewMtx * modelToWorldMtx * vec4(position, 1.0);
+        
+        vec4 worldPos = viewMatrix * modelMatrix * vec4 ( position, 1.0 );
+        toLightDir = normalize ( viewMatrix * vec4 ( lightPosition, 1.0 ) - worldPos );
+        normalVarying = vec4 ( normalMatrix * normal, 1.0 );
+
+        gl_Position = projectionMatrix * worldPos;
       }
 
     </script>

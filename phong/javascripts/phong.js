@@ -13,29 +13,19 @@ var worldToViewMatrix;
 var viewToProjectionMatrix;
 
 var cubeGeometry;
-
-function addPointLight () {
-
-  // create a point light
-  pointLight = new THREE.PointLight ( 0xFFFFFF );
-
-  // set its position
-  pointLight.position.x = 1;
-  pointLight.position.y = 0;
-  pointLight.position.z = 0;
-
-  // add to the scene
-  scene.add ( pointLight );
-}
+var diffuseColor = new THREE.Vector3 ( 0.5, 0.1, 0.7 );
 
 function initCamera () {
 
   camera = new THREE.PerspectiveCamera ( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
   
-  camera.position.set ( 2,2,2 );
-  camera.up = new THREE.Vector3 ( -1, 1,-1 );
+  camera.position.set ( 0, 0, 3 );
+  camera.up = new THREE.Vector3 ( 0, 1, 0 );
   camera.lookAt ( new THREE.Vector3 ( 0, 0,0 ));
   camera.updateMatrixWorld ( true );
+
+  var controls = new THREE.OrbitControls( camera, renderer.domElement );
+  controls.target.set ( 0, 0, 0 );
 }
 
 function initThreeJS () {
@@ -56,28 +46,21 @@ function initScene () {
 
   initThreeJS ();
   initCamera ();
-  initShader ();
+  renderPointLight ();
   renderAxis ();
   renderCube ();
-  addPointLight ();
-  renderPointLight ();
+  renderGrid ();
 }
 
 function initShader () {
 
-  modelToWorldMatrix = new THREE.Matrix4 ();
-  worldToViewMatrix = camera.matrixWorldInverse;
-  viewToProjectionMatrix = camera.projectionMatrix;
-//debugger;
-  //cube.computeVertexNormals ();
   cubeGeometry = new THREE.BoxBufferGeometry  ( 1, 1, 1 );
 
   // Uniforms
   var uniforms = {  
     myColor: { type: "c", value: new THREE.Color( 0xff0000 ) },
-    modelToWorldMtx: { type: 'm4', value: modelToWorldMatrix },
-    worldToViewMtx: { type: 'm4', value: worldToViewMatrix },
-    viewToProjectionMtx: { type: 'm4', value: viewToProjectionMatrix },
+    lightPosition: { type: 'v3', value: pointLight.position },
+    diffuseColor:  { type: 'v3', value: diffuseColor },
   };
 
   phongMaterial = new THREE.ShaderMaterial ({  
@@ -111,14 +94,43 @@ function renderAxis () {
 
 function renderCube () {
 
+  initShader ();
   var material = new THREE.MeshLambertMaterial ({ color: 0xCC0000 });
-  //cubeMesh = new THREE.Mesh ( cubeGeometry, material );
   cubeMesh = new THREE.Mesh ( cubeGeometry, phongMaterial );
-  //cubeMesh = new THREE.Mesh ( cubeGeometry, material );
   scene.add ( cubeMesh );
 }
 
+function renderGrid () {
+
+  // each square
+  var planeW = 10; // pixels
+  var planeH = 10; // pixels 
+  var numW = 1; // how many wide (50*50 = 2500 pixels wide)
+  var numH = 1; // how many tall (50*50 = 2500 pixels tall)
+  var plane = new THREE.Mesh(
+      new THREE.PlaneGeometry( planeW*numW, planeH*numH, planeW, planeH ),
+      new THREE.MeshBasicMaterial( {
+          color: 0xffffff,
+          wireframe: true
+      } )
+  );
+
+  plane.rotation.x = Math.PI/2;
+  scene.add(plane);
+}
+
 function renderPointLight () {
+
+  // create a point light
+  pointLight = new THREE.PointLight ( 0xFFFFFF );
+
+  // set its position
+  pointLight.position.x = 1;
+  pointLight.position.y = 1;
+  pointLight.position.z = 1;
+
+  // add to the scene
+  scene.add ( pointLight );
 
   var geometry = new THREE.SphereGeometry ( 0.25, 64, 64 );
   var material = new THREE.MeshBasicMaterial ({ color: 0xffffff });
@@ -132,9 +144,9 @@ var render = function () {
 
   requestAnimationFrame ( render );
 
-  cubeMesh.rotation.x += 0.01;
-  cubeMesh.rotation.y += 0.01;
-
+  cubeMesh.rotateX ( 0.01 );
+  cubeMesh.rotateY ( 0.01 );
+  cubeMesh.rotateZ ( 0.01 );
   renderer.render ( scene, camera );
 };
 
