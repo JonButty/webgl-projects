@@ -5,15 +5,17 @@ var renderer;
 var phongMaterial;
 
 var cubeMesh;
+var cubeGeometry;
+
 var pointLightMesh;
 var pointLight;
 
-var modelToWorldMatrix;
-var worldToViewMatrix;
-var viewToProjectionMatrix;
-
-var cubeGeometry;
+// Light properties
 var diffuseColor = new THREE.Vector3 ( 0.5, 0.1, 0.7 );
+var specularColor = new THREE.Vector3 ( 1, 1, 1 );
+var shineValue = 5;
+var lightIntensity = 2;
+var attenuation = 0.000001;
 
 function initCamera () {
 
@@ -54,13 +56,15 @@ function initScene () {
 
 function initShader () {
 
-  cubeGeometry = new THREE.BoxBufferGeometry  ( 1, 1, 1 );
-
   // Uniforms
   var uniforms = {  
     myColor: { type: "c", value: new THREE.Color( 0xff0000 ) },
     lightPosition: { type: 'v3', value: pointLight.position },
     diffuseColor:  { type: 'v3', value: diffuseColor },
+    specularColor:  { type: 'v3', value: specularColor },
+    shineValue:  { type: 'f', value: shineValue },
+    lightIntensity:  { type: 'f', value: lightIntensity },
+    attenuation:  { type: 'f', value: attenuation },
   };
 
   phongMaterial = new THREE.ShaderMaterial ({  
@@ -95,8 +99,13 @@ function renderAxis () {
 function renderCube () {
 
   initShader ();
-  var material = new THREE.MeshLambertMaterial ({ color: 0xCC0000 });
+
+  cubeGeometry = new THREE.BoxBufferGeometry  ( 1, 1, 1 );
+  cubeGeometry = new THREE.SphereBufferGeometry  ( 1, 64, 64 );
+
+  //var material = new THREE.MeshPhongMaterial ({ colorDiffuse: diffuseColor, colorSpecular: specularColor, specularCoef: 0.1 });
   cubeMesh = new THREE.Mesh ( cubeGeometry, phongMaterial );
+  //cubeMesh = new THREE.Mesh ( cubeGeometry, material );
   scene.add ( cubeMesh );
 }
 
@@ -144,9 +153,9 @@ var render = function () {
 
   requestAnimationFrame ( render );
 
-  cubeMesh.rotateX ( 0.01 );
-  cubeMesh.rotateY ( 0.01 );
-  cubeMesh.rotateZ ( 0.01 );
+  //cubeMesh.rotateX ( 0.01 );
+  //cubeMesh.rotateY ( 0.01 );
+  //cubeMesh.rotateZ ( 0.01 );
   renderer.render ( scene, camera );
 };
 
