@@ -101,8 +101,15 @@ function renderCube () {
   initShader ();
 
   cubeGeometry = new THREE.BoxBufferGeometry  ( 1, 1, 1 );
-  cubeGeometry = new THREE.SphereBufferGeometry  ( 1, 64, 64 );
+  //cubeGeometry = new THREE.SphereBufferGeometry  ( 1, 64, 64 );
+  //cubeGeometry = new THREE.TeapotBufferGeometry  ( 1, 100 );
 
+  var tangents = new Float32Array( cubeGeometry.attributes.position.count * 3 );
+  for ( var i = 0; i < tangents.count; i++ ) {
+    tangents[ i ] = new THREE.Vector3 ( 1, 0, 0 ); 
+  }
+  
+  cubeGeometry.addAttribute( 'tangent', new THREE.BufferAttribute( tangents, 3 ) );
   //var material = new THREE.MeshPhongMaterial ({ colorDiffuse: diffuseColor, colorSpecular: specularColor, specularCoef: 0.1 });
   cubeMesh = new THREE.Mesh ( cubeGeometry, phongMaterial );
   //cubeMesh = new THREE.Mesh ( cubeGeometry, material );
@@ -154,8 +161,8 @@ var render = function () {
   requestAnimationFrame ( render );
 
   //cubeMesh.rotateX ( 0.01 );
-  //cubeMesh.rotateY ( 0.01 );
-  //cubeMesh.rotateZ ( 0.01 );
+  cubeMesh.rotateY ( 0.01 );
+  cubeMesh.rotateZ ( 0.01 );
   renderer.render ( scene, camera );
 };
 
