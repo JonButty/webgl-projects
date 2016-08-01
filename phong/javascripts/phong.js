@@ -34,12 +34,7 @@ function initThreeJS () {
 
   scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer();
-  
-  // non-fullscreen
-  //var canvas = document.getElementById ( 'glCanvas' );
-  //var width = canvas.width;
-  //var height = canvas.height;
-  //renderer.setSize ( width, height );
+
   renderer.setSize ( window.innerWidth, window.innerHeight );
   document.body.appendChild ( renderer.domElement );
 }

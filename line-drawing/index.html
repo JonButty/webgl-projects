@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+  <head>
+    <title>My first Three.js app</title>
+    <style>
+      body { margin: 0; }
+      canvas { width: 100%; height: 100% }
+    </style>
+  </head>
+  <body>
+  <!-- non-fullscreen
+    <canvas id="glCanvas" style="border: none;" width="100%" height="100%"></canvas>
+    -->
+    <script src="../javascripts/threejs/build/three.js"></script>
+    <script src="../javascripts/threejs/examples/js/controls/OrbitControls.js"></script>
+    <script src='../javascripts/threejs/examples/js/geometries/TeapotBufferGeometry.js'></script>
+    <script type="x-shader/x-fragment" id="fragmentShader">
+      
+      uniform vec3 diffuseColor;
+      uniform vec3 specularColor;
+      uniform float shineValue;
+      uniform float attenuation;
+      uniform float lightIntensity;
+
+      varying vec4 toLightDir_view;
+      varying vec4 toLightVec_view;
+      varying vec4 normalVarying_view;
+      varying vec4 toCameraVarying_view;
+      varying vec3 tangentVarying;
+
+      void main(void) {
+
+        float lambertCoefficient = dot ( normalVarying_view, toLightDir_view );
+        float att = 1.0 / ( 1.0 + length ( toLightVec_view ) * attenuation );
+
+        // TODO why do we need to negate the normal?
+        vec4 diffuse = vec4 ( diffuseColor, 1.0 ) * lambertCoefficient * lightIntensity * att;
+        vec4 reflectLight = reflect ( -normalVarying_view, toLightDir_view );
+        vec4 specular = vec4 ( 0, 0, 0, 0 );
+
+        if ( lambertCoefficient > 0.0 ) {
+        
+          specular = vec4 ( specularColor, 1.0 ) * pow ( max ( dot ( reflectLight, toCameraVarying_view ), 0.0 ), shineValue ) * lightIntensity * att;
+        }
+
+        gl_FragColor = diffuse + specular;
+        gl_FragColor = vec4 ( tangentVarying, 1.0 );
+      }
+
+    </script>
+    <script type="x-shader/x-vertex" id="vertexShader">
+      
+      attribute vec3 tangent;
+
+      uniform vec3 lightPosition;
+      uniform vec3 diffuseColor;
+      uniform vec3 specularColor;
+      uniform float shineValue;
+      uniform float attenuation;
+      uniform float lightIntensity;
+
+      varying vec4 toLightDir_view;
+      varying vec4 toLightVec_view;
+      varying vec4 normalVarying_view;
+      varying vec4 toCameraVarying_view;
+      varying vec3 tangentVarying;
+
+      void main(void) {
+        
+        vec4 pos_view = modelViewMatrix * vec4 ( position, 1.0 );
+        
+        toLightVec_view = viewMatrix * vec4 ( lightPosition, 1.0 ) - pos_view;
+        toLightDir_view = normalize ( toLightVec_view );
+        normalVarying_view = normalize ( vec4 ( normalMatrix * normal, 0.0 ));
+        toCameraVarying_view = normalize ( -pos_view );
+        gl_Position = projectionMatrix * pos_view;
+
+        tangentVarying = tangent;
+      }
+
+    </script>
+    <script src="javascripts/phong.js"></script>
+  </body>
+</html>
